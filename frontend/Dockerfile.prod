@@ -25,7 +25,9 @@ ENV VITE_APP_TICKET_URL=$VITE_APP_TICKET_URL
 ENV VITE_APP_CUSTOMER_H5_URL=$VITE_APP_CUSTOMER_H5_URL
 ENV VITE_APP_MARKETING_URL=$VITE_APP_MARKETING_URL
 
-RUN corepack enable && pnpm install --frozen-lockfile
+RUN corepack enable \
+  && pnpm config set registry https://registry.npmmirror.com \
+  && pnpm install --frozen-lockfile
 RUN pnpm --filter @astraflow/portal-shell build \
   && pnpm --filter @astraflow/app-admin build \
   && pnpm --filter @astraflow/app-chat build \
