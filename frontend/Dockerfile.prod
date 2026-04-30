@@ -1,0 +1,55 @@
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY frontend/package.json frontend/pnpm-workspace.yaml frontend/pnpm-lock.yaml ./
+COPY frontend/tsconfig.base.json ./tsconfig.base.json
+COPY frontend/packages ./packages
+COPY frontend/apps ./apps
+
+ARG VITE_API_BASE_URL=/api
+ARG VITE_PORTAL_URL=/
+ARG VITE_APP_ADMIN_URL=/micro/admin/
+ARG VITE_APP_CHAT_URL=/micro/chat/
+ARG VITE_APP_AUDIT_URL=/micro/audit/
+ARG VITE_APP_TICKET_URL=/micro/ticket/
+ARG VITE_APP_CUSTOMER_H5_URL=/micro/customer/
+ARG VITE_APP_MARKETING_URL=/micro/marketing/
+
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_PORTAL_URL=$VITE_PORTAL_URL
+ENV VITE_APP_ADMIN_URL=$VITE_APP_ADMIN_URL
+ENV VITE_APP_CHAT_URL=$VITE_APP_CHAT_URL
+ENV VITE_APP_AUDIT_URL=$VITE_APP_AUDIT_URL
+ENV VITE_APP_TICKET_URL=$VITE_APP_TICKET_URL
+ENV VITE_APP_CUSTOMER_H5_URL=$VITE_APP_CUSTOMER_H5_URL
+ENV VITE_APP_MARKETING_URL=$VITE_APP_MARKETING_URL
+
+RUN corepack enable && pnpm install --frozen-lockfile
+RUN pnpm --filter @astraflow/portal-shell build \
+  && pnpm --filter @astraflow/app-admin build \
+  && pnpm --filter @astraflow/app-chat build \
+  && pnpm --filter @astraflow/app-audit build \
+  && pnpm --filter @astraflow/app-ticket build \
+  && pnpm --filter @astraflow/app-customer-h5 build \
+  && pnpm --filter @astraflow/app-marketing build
+
+RUN mkdir -p /out \
+  /out/micro/admin \
+  /out/micro/chat \
+  /out/micro/audit \
+  /out/micro/ticket \
+  /out/micro/customer \
+  /out/micro/marketing \
+  && cp -r apps/portal-shell/dist/. /out/ \
+  && cp -r apps/app-admin/dist/. /out/micro/admin/ \
+  && cp -r apps/app-chat/dist/. /out/micro/chat/ \
+  && cp -r apps/app-audit/dist/. /out/micro/audit/ \
+  && cp -r apps/app-ticket/dist/. /out/micro/ticket/ \
+  && cp -r apps/app-customer-h5/dist/. /out/micro/customer/ \
+  && cp -r apps/app-marketing/dist/. /out/micro/marketing/
+
+FROM nginx:1.27-alpine
+
+COPY infra/nginx/nginx.prod.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /out /usr/share/nginx/html

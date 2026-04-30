@@ -1,0 +1,8 @@
+{
+  "name": "@astraflow/app-ticket",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": { "dev": "vite --host 0.0.0.0 --port 17304", "build": "vue-tsc --noEmit && vite build" },
+  "dependencies": { "@astraflow/shared-api": "workspace:*", "@astraflow/shared-auth": "workspace:*", "vue": "^3.5.3" },
+  "devDependencies": { "vue-tsc": "^2.1.6" }
+}

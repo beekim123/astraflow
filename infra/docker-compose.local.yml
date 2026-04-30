@@ -1,0 +1,131 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: astraflow
+      POSTGRES_USER: astraflow
+      POSTGRES_PASSWORD: astraflow
+    ports:
+      - "15432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U astraflow -d astraflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "16379:6379"
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build:
+      context: ../backend
+    environment:
+      APP_ENV: local
+      SECRET_KEY: local-dev-secret
+      DATABASE_URL: postgresql+asyncpg://astraflow:astraflow@postgres:5432/astraflow
+      REDIS_URL: redis://redis:6379/0
+      CORS_ORIGINS: http://localhost:17300,http://localhost:17301,http://localhost:17302,http://localhost:17303,http://localhost:17304,http://localhost:17305,http://localhost:17306,http://localhost:18000
+      GATE_COOKIE_SECURE: "false"
+    ports:
+      - "18080:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: sh -c "alembic upgrade head && python -m app.db.init_db && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  portal-shell:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile.dev
+    command: pnpm --filter @astraflow/portal-shell dev
+    environment:
+      VITE_API_BASE_URL: http://localhost:18000/api
+      VITE_PORTAL_URL: http://localhost:18000
+      VITE_APP_ADMIN_URL: http://localhost:18000/micro/admin/
+      VITE_APP_CHAT_URL: http://localhost:18000/micro/chat/
+      VITE_APP_AUDIT_URL: http://localhost:18000/micro/audit/
+      VITE_APP_TICKET_URL: http://localhost:18000/micro/ticket/
+      VITE_APP_CUSTOMER_H5_URL: http://localhost:18000/micro/customer/
+      VITE_APP_MARKETING_URL: http://localhost:18000/micro/marketing/
+
+  app-admin:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile.dev
+    command: pnpm --filter @astraflow/app-admin dev
+    environment:
+      VITE_API_BASE_URL: http://localhost:18000/api
+      VITE_PORTAL_URL: http://localhost:18000
+
+  app-chat:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile.dev
+    command: pnpm --filter @astraflow/app-chat dev
+    environment:
+      VITE_API_BASE_URL: http://localhost:18000/api
+      VITE_PORTAL_URL: http://localhost:18000
+
+  app-audit:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile.dev
+    command: pnpm --filter @astraflow/app-audit dev
+    environment:
+      VITE_API_BASE_URL: http://localhost:18000/api
+      VITE_PORTAL_URL: http://localhost:18000
+
+  app-ticket:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile.dev
+    command: pnpm --filter @astraflow/app-ticket dev
+    environment:
+      VITE_API_BASE_URL: http://localhost:18000/api
+      VITE_PORTAL_URL: http://localhost:18000
+
+  app-customer-h5:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile.dev
+    command: pnpm --filter @astraflow/app-customer-h5 dev
+    environment:
+      VITE_API_BASE_URL: http://localhost:18000/api
+      VITE_PORTAL_URL: http://localhost:18000
+
+  app-marketing:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile.dev
+    command: pnpm --filter @astraflow/app-marketing dev
+    environment:
+      VITE_API_BASE_URL: http://localhost:18000/api
+      VITE_PORTAL_URL: http://localhost:18000
+
+  nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./nginx/nginx.local.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "18000:80"
+    depends_on:
+      - backend
+      - portal-shell
+      - app-admin
+      - app-chat
+      - app-audit
+      - app-ticket
+      - app-customer-h5
+      - app-marketing
+
+volumes:
+  postgres_data:
+  redis_data:

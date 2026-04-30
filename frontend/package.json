@@ -1,0 +1,29 @@
+{
+  "name": "astraflow-frontend",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "dev:portal": "pnpm --filter @astraflow/portal-shell dev",
+    "dev:admin": "pnpm --filter @astraflow/app-admin dev",
+    "dev:chat": "pnpm --filter @astraflow/app-chat dev",
+    "dev:audit": "pnpm --filter @astraflow/app-audit dev",
+    "dev:ticket": "pnpm --filter @astraflow/app-ticket dev",
+    "dev:customer": "pnpm --filter @astraflow/app-customer-h5 dev",
+    "dev:marketing": "pnpm --filter @astraflow/app-marketing dev",
+    "build": "pnpm -r --if-present build"
+  },
+  "dependencies": {
+    "@micro-zoe/micro-app": "^1.0.0-rc.19",
+    "@vitejs/plugin-vue": "^5.1.2",
+    "axios": "^1.7.7",
+    "element-plus": "^2.11.8",
+    "pinia": "^2.2.2",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.2",
+    "vue": "^3.5.3",
+    "vue-router": "^4.4.3"
+  },
+  "devDependencies": {}
+}
