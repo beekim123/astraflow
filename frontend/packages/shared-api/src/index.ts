@@ -15,12 +15,19 @@ export const api = axios.create({
 
 let refreshing: Promise<string | null> | null = null
 
+function createRequestId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID()
+  }
+  return `req-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`
+}
+
 api.interceptors.request.use((config) => {
   const token = getAccessToken()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
-  config.headers["X-Request-ID"] = crypto.randomUUID()
+  config.headers["X-Request-ID"] = createRequestId()
   return config
 })
 
