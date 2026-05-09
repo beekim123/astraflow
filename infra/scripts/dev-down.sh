@@ -2,5 +2,4 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/../.."
-docker compose -f infra/docker-compose.local.yml down
-
+docker compose -f infra/docker-compose.local.yml --profile full down

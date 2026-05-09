@@ -38,3 +38,22 @@ export function getMe() {
 export function getMenus() {
   return unwrap<MenuItem[]>(api.get("/menus/me"))
 }
+
+export type LearnUserInfo = {
+  id: string
+  username: string
+  nickname: string
+  email?: string | null
+  phone?: string | null
+  status: string
+  is_superuser: boolean
+  organization_id: string
+}
+
+export function getLearnInfo() {
+  return unwrap<LearnUserInfo>(api.get("/learn/getInfo"))
+}
+
+export function getLearnInfoFromDb() {
+  return unwrap<LearnUserInfo>(api.get("/learn/getInfoFromDb"))
+}

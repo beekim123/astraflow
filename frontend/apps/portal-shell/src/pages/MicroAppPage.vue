@@ -23,12 +23,12 @@ const route = useRoute()
 const loadError = ref(false)
 const withSlash = (url: string) => (url.endsWith("/") ? url : `${url}/`)
 const appMap = {
-  admin: { name: "admin", title: "管理系统", baseRoute: "/admin", url: withSlash(import.meta.env.VITE_APP_ADMIN_URL || "http://localhost:17301") },
-  chat: { name: "chat", title: "AI 对话", baseRoute: "/chat", url: withSlash(import.meta.env.VITE_APP_CHAT_URL || "http://localhost:17302") },
-  audit: { name: "audit", title: "智能审核", baseRoute: "/audit", url: withSlash(import.meta.env.VITE_APP_AUDIT_URL || "http://localhost:17303") },
-  ticket: { name: "ticket", title: "AI 工单", baseRoute: "/ticket", url: withSlash(import.meta.env.VITE_APP_TICKET_URL || "http://localhost:17304") },
-  customer: { name: "customer", title: "H5 客服", baseRoute: "/customer-h5", url: withSlash(import.meta.env.VITE_APP_CUSTOMER_H5_URL || "http://localhost:17305") },
-  marketing: { name: "marketing", title: "内容营销助手", baseRoute: "/marketing", url: withSlash(import.meta.env.VITE_APP_MARKETING_URL || "http://localhost:17306") },
+  admin: { name: "admin", title: "管理系统", baseRoute: "/admin", url: withSlash(import.meta.env.VITE_APP_ADMIN_URL || "/micro/admin/") },
+  chat: { name: "chat", title: "AI 对话", baseRoute: "/chat", url: withSlash(import.meta.env.VITE_APP_CHAT_URL || "/micro/chat/") },
+  audit: { name: "audit", title: "智能审核", baseRoute: "/audit", url: withSlash(import.meta.env.VITE_APP_AUDIT_URL || "/micro/audit/") },
+  ticket: { name: "ticket", title: "AI 工单", baseRoute: "/ticket", url: withSlash(import.meta.env.VITE_APP_TICKET_URL || "/micro/ticket/") },
+  customer: { name: "customer", title: "H5 客服", baseRoute: "/customer-h5", url: withSlash(import.meta.env.VITE_APP_CUSTOMER_H5_URL || "/micro/customer/") },
+  marketing: { name: "marketing", title: "内容营销助手", baseRoute: "/marketing", url: withSlash(import.meta.env.VITE_APP_MARKETING_URL || "/micro/marketing/") },
 }
 
 const current = computed(() => appMap[(route.meta.app as keyof typeof appMap) || "chat"])

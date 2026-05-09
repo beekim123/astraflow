@@ -11,18 +11,38 @@
 - 操作日志和 RequestID
 - AI 边界预留：`AgentClient` + `MockAgentClient`
 
-## 本地开发
+## 本地断点调试
+
+后端本地调试时，只让 Docker 跑 PostgreSQL 和 Redis，后端进程在本机启动。
+
+先在项目根目录启动基础设施：
+
+```bash
+cd /Users/key_/Desktop/CURRGO/AI/AstraFlow/proj
+./infra/scripts/debug-infra-up.sh
+```
+
+再启动后端：
 
 ```bash
 cd /Users/key_/Desktop/CURRGO/AI/AstraFlow/proj/backend
-python -m venv .venv
+python3.13 -m venv .venv
 source .venv/bin/activate
-pip install -e ".[dev]"
-cp .env.example .env
-alembic upgrade head
+python -m pip install -e ".[dev]"
+test -f .env || cp .env.example .env
+python -m alembic upgrade head
 python -m app.db.init_db
-uvicorn app.main:app --reload --port 18080
+python -m uvicorn app.main:app --reload --port 18080
 ```
+
+`backend/.env.example` 默认连接本机端口：
+
+```text
+DATABASE_URL=postgresql+asyncpg://astraflow:astraflow@localhost:15432/astraflow
+REDIS_URL=redis://localhost:16379/0
+```
+
+不要把这里改成 `postgres:5432` 或 `redis:6379`，那是 Docker 容器内部使用的地址。
 
 Swagger：
 

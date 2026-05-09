@@ -9,7 +9,7 @@ class Settings(BaseSettings):
 
     app_name: str = "AstraFlow AI"
     app_env: str = "local"
-    debug: bool = True
+    debug: bool = Field(default=True, validation_alias="APP_DEBUG")
     display_timezone: str = "Asia/Shanghai"
     secret_key: str = Field(default="dev-only-secret")
     access_token_expire_minutes: int = 30

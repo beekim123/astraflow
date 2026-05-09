@@ -11,6 +11,23 @@
         <button v-if="loggedIn" @click="logout">退出登录</button>
       </div>
     </header>
+    <section class="learn-check-panel">
+      <div>
+        <p class="eyebrow">Backend Flow Check</p>
+        <h2>后端联调检查</h2>
+        <p>对比两个受保护接口：一个直接使用当前登录用户，一个重新查询数据库。</p>
+      </div>
+      <div class="learn-check-actions">
+        <button @click="loadLearnInfo">读取当前用户</button>
+        <button @click="loadLearnInfoFromDb">查库读取当前用户</button>
+      </div>
+      <p v-if="learnError" class="error">{{ learnError }}</p>
+      <div v-if="learnInfo" class="learn-result">
+        <span>{{ learnSource }}</span>
+        <strong>{{ learnInfo.username }}</strong>
+        <p>{{ learnInfo.nickname }} · {{ learnInfo.status }} · {{ learnInfo.organization_id }}</p>
+      </div>
+    </section>
     <section class="system-grid">
       <article v-for="card in cards" :key="card.path" class="system-card" @click="go(card.path)">
         <div class="icon">{{ card.icon }}</div>
@@ -26,10 +43,13 @@
 import { computed, onMounted, ref } from "vue"
 import { useRouter } from "vue-router"
 import { clearTokens, isLoggedIn } from "@astraflow/shared-auth"
-import { getMenus, type MenuItem } from "../api"
+import { getLearnInfo, getLearnInfoFromDb, getMenus, type LearnUserInfo, type MenuItem } from "../api"
 
 const router = useRouter()
 const menus = ref<MenuItem[]>([])
+const learnInfo = ref<LearnUserInfo | null>(null)
+const learnSource = ref("")
+const learnError = ref("")
 const loggedIn = computed(() => isLoggedIn())
 const descriptions: Record<string, string> = {
   "/admin": "用户、角色、菜单、权限和操作日志管理。",
@@ -70,6 +90,25 @@ function go(path: string) {
 function logout() {
   clearTokens()
   router.push("/login")
+}
+
+async function loadLearnInfo() {
+  await loadLearnUser("getInfo", getLearnInfo)
+}
+
+async function loadLearnInfoFromDb() {
+  await loadLearnUser("getInfoFromDb", getLearnInfoFromDb)
+}
+
+async function loadLearnUser(source: string, request: () => Promise<LearnUserInfo>) {
+  learnError.value = ""
+  try {
+    learnInfo.value = await request()
+    learnSource.value = source
+  } catch {
+    learnInfo.value = null
+    learnError.value = "请求失败，请确认已经登录并且后端服务正常。"
+  }
 }
 
 onMounted(async () => {

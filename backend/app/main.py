@@ -12,6 +12,7 @@ from app.core.responses import error_response, success
 from app.modules.audit_log.router import router as audit_log_router
 from app.modules.identity.router import admin_router as users_admin_router
 from app.modules.identity.router import auth_router
+from app.modules.learn.router import learn_router
 from app.modules.placeholder.router import router as placeholder_router
 from app.modules.rbac.router import admin_menus_router, menus_router, permissions_router, roles_router
 from app.modules.security_gate.router import router as security_gate_router
@@ -86,6 +87,7 @@ async def health():
 # router 可以理解为一个模块的一组接口集合；include_router 后，这些接口才会加入 app。
 app.include_router(security_gate_router)
 app.include_router(auth_router)
+app.include_router(learn_router)
 app.include_router(menus_router)
 app.include_router(users_admin_router)
 app.include_router(roles_router)
