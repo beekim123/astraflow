@@ -27,26 +27,32 @@
 
 ## 2. 服务器目录约定
 
-以下命令假设服务器目录是：
+当前服务器目录按已有结构使用：
 
 ```text
-/opt/astraflow/app
+/opt/astraflow/repo
 ```
 
-备份目录是：
+版本备份目录：
 
 ```text
 /opt/astraflow/releases
 ```
 
-如果服务器实际目录不同，替换命令里的路径。
+每次发布前，把当前 `repo` 复制到一个时间戳目录里：
+
+```text
+/opt/astraflow/releases/202605091517
+```
+
+这样不需要改线上项目目录名，线上始终使用 `/opt/astraflow/repo`。
 
 ## 3. 发布前检查
 
 进入项目目录：
 
 ```bash
-cd /opt/astraflow/app
+cd /opt/astraflow/repo
 ```
 
 确认当前分支和提交：
@@ -78,12 +84,14 @@ curl -fsS "$(grep -E '^HEALTHCHECK_URL=' infra/env/.env.prod | cut -d '=' -f 2-)
 
 ## 4. 备份当前项目目录
 
-在 `/opt/astraflow` 下备份当前 app 目录：
+在 `/opt/astraflow` 下备份当前 `repo` 目录：
 
 ```bash
 cd /opt/astraflow
 mkdir -p releases
-cp -a app "releases/app-$(date +%Y%m%d-%H%M%S)"
+release_id="$(date +%Y%m%d%H%M)"
+cp -a repo "releases/$release_id"
+echo "Backup release: /opt/astraflow/releases/$release_id"
 ```
 
 查看刚生成的备份：
@@ -97,7 +105,7 @@ ls -lt releases | head
 ## 5. 备份数据库
 
 ```bash
-cd /opt/astraflow/app
+cd /opt/astraflow/repo
 ./infra/scripts/backup-db.sh
 ```
 
@@ -116,7 +124,7 @@ ls -lt /opt/astraflow/backups/postgres | head
 ## 6. 拉取新代码
 
 ```bash
-cd /opt/astraflow/app
+cd /opt/astraflow/repo
 git pull origin master
 ```
 
@@ -129,7 +137,7 @@ git log --oneline -5
 ## 7. 执行部署
 
 ```bash
-cd /opt/astraflow/app
+cd /opt/astraflow/repo
 ./infra/scripts/deploy-prod.sh
 ```
 
@@ -186,16 +194,16 @@ ls -lt releases | head
 假设要回滚到：
 
 ```text
-/opt/astraflow/releases/app-20260509-153000
+/opt/astraflow/releases/202605091517
 ```
 
 执行：
 
 ```bash
 cd /opt/astraflow
-mv app "app-bad-$(date +%Y%m%d-%H%M%S)"
-cp -a releases/app-20260509-153000 app
-cd app
+mv repo "repo-bad-$(date +%Y%m%d%H%M)"
+cp -a releases/202605091517 repo
+cd repo
 docker compose --env-file infra/env/.env.prod -f infra/docker-compose.prod.yml up -d --build --remove-orphans
 ```
 
@@ -246,4 +254,3 @@ docker compose config
 ```
 
 等手动发布稳定 2-3 次，再考虑自动 CD。
-
