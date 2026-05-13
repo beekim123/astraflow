@@ -7,7 +7,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.db.session import async_session_maker
 from app.core.logging import log_service_event
-from app.modules.audit_log.models import OperationLog
+from app.common.audit_log.models import OperationLog
 
 logger = logging.getLogger("astraflow.request")
 

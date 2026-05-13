@@ -6,9 +6,9 @@ from app.core.security import hash_password
 from app.db.base import Base
 from app.db.models import *  # noqa: F403
 from app.db.session import async_session_maker, engine
-from app.modules.identity.models import User
-from app.modules.ai_admin.models import ForbiddenWord, ModelRouteRule, PromptTemplate
-from app.modules.rbac.models import Menu, Permission, Role
+from app.common.identity.models import User
+from app.common.ai_admin.models import ForbiddenWord, ModelRouteRule, PromptTemplate
+from app.common.rbac.models import Menu, Permission, Role
 
 
 PERMISSIONS = [

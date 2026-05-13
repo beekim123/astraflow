@@ -2,7 +2,7 @@
 
 本目录放第一阶段基础设施：
 
-- `docker-compose.local.yml`：本地 Docker Compose。默认只启动 PostgreSQL、Redis；使用 `--profile full` 时启动 `backend-api`、`ai-gateway`、`mcp-llm-gateway`、多个 Vite 前端子应用和 Nginx。
+- `docker-compose.local.yml`：本地 Docker Compose。默认只启动 PostgreSQL、Redis；使用 `--profile full` 时启动 `backend-api`、`ai-gateway`、`llm-provider`、多个 Vite 前端子应用和 Nginx。
 - `nginx/nginx.local.conf`：本地反向代理，`/api` 转发到后端。
 - `scripts/dev-up.sh`：一键启动全量 Docker 环境。
 - `scripts/dev-down.sh`：停止全量 Docker 环境。
@@ -39,7 +39,7 @@ http://localhost:18000
 ```text
 backend-api:       http://localhost:18080/api/health
 ai-gateway:        http://localhost:18081/health
-mcp-llm-gateway:   http://localhost:18082/health
+llm-provider:      http://localhost:18082/health
 ```
 
 如果暂时不接真实大模型，可以不创建 `infra/env/.env.local`，本地会继续使用默认 mock 链路。

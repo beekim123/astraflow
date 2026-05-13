@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.ai_admin.models import ModelRouteRule
+from app.common.ai_admin.models import ModelRouteRule
 
 HEALTH_RANK = {
     "healthy": 0,

@@ -30,13 +30,13 @@ services:
     networks:
       - astraflow_net
 
-  mcp-llm-gateway:
+  llm-provider:
     build:
       context: ../backend
       dockerfile: Dockerfile.prod
     restart: unless-stopped
     environment:
-      SERVICE_NAME: mcp-llm-gateway
+      SERVICE_NAME: llm-provider
       APP_ENV: ${APP_ENV}
       APP_NAME: ${APP_NAME}
       APP_DEBUG: ${APP_DEBUG}
@@ -54,7 +54,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-    command: uvicorn app.services.mcp_llm_gateway.main:app --host 0.0.0.0 --port 8020
+    command: uvicorn app.services.llm_provider.main:app --host 0.0.0.0 --port 8020
     networks:
       - astraflow_net
 
@@ -73,11 +73,11 @@ services:
       REDIS_URL: ${REDIS_URL}
       AI_GATEWAY_INTERNAL_TOKEN: ${AI_GATEWAY_INTERNAL_TOKEN}
       AI_GATEWAY_TIMEOUT_SECONDS: ${AI_GATEWAY_TIMEOUT_SECONDS:-120}
-      MCP_LLM_GATEWAY_URL: ${MCP_LLM_GATEWAY_URL}
+      LLM_PROVIDER_URL: ${LLM_PROVIDER_URL}
     depends_on:
       postgres:
         condition: service_healthy
-      mcp-llm-gateway:
+      llm-provider:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8010/health', timeout=3)"]
@@ -163,7 +163,7 @@ services:
         condition: service_healthy
       ai-gateway:
         condition: service_healthy
-      mcp-llm-gateway:
+      llm-provider:
         condition: service_healthy
     networks:
       - astraflow_net

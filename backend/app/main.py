@@ -9,15 +9,15 @@ from app.core.errors import ErrorCode
 from app.core.logging import configure_logging
 from app.core.middleware import OperationLogMiddleware, RequestIDMiddleware
 from app.core.responses import error_response, success
-from app.modules.audit_log.router import router as audit_log_router
-from app.modules.ai_admin.router import router as ai_admin_router
-from app.modules.chat.router import router as chat_router
-from app.modules.identity.router import admin_router as users_admin_router
-from app.modules.identity.router import auth_router
-from app.modules.learn.router import learn_router
-from app.modules.placeholder.router import router as placeholder_router
-from app.modules.rbac.router import admin_menus_router, menus_router, permissions_router, roles_router
-from app.modules.security_gate.router import router as security_gate_router
+from app.common.audit_log.router import router as audit_log_router
+from app.common.ai_admin.router import router as ai_admin_router
+from app.apps.chat.router import router as chat_router
+from app.common.identity.router import admin_router as users_admin_router
+from app.common.identity.router import auth_router
+from app.apps.learn.router import learn_router
+from app.apps.placeholder.router import router as placeholder_router
+from app.common.rbac.router import admin_menus_router, menus_router, permissions_router, roles_router
+from app.common.security_gate.router import router as security_gate_router
 
 # 入口文件的职责：
 # 1. 创建 FastAPI 应用实例。

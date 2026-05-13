@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.ai_admin.models import PromptTemplate
+from app.common.ai_admin.models import PromptTemplate
 
 DEFAULT_PROMPTS = {
     "chat-general": "你是 AstraFlow 企业 AI 工作台助手，请用清晰、简洁、可执行的方式回答用户。",

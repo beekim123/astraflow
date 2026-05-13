@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.ai_admin.models import ForbiddenWord
+from app.common.ai_admin.models import ForbiddenWord
 
 
 @dataclass(frozen=True)

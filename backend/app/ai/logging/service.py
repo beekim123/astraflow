@@ -1,5 +1,5 @@
 from app.ai.contracts.schemas import AgentRequest, AgentResult
-from app.modules.ai_admin.models import ModelCallLog
+from app.common.ai_admin.models import ModelCallLog
 
 
 def build_model_call_log(

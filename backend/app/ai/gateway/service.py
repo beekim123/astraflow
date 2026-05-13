@@ -9,7 +9,7 @@ from app.ai.contracts.schemas import AgentRequest, AgentResult
 from app.ai.logging.service import build_model_call_log
 from app.ai.prompt_hub.service import render_prompt
 from app.ai.providers.base import AiProvider
-from app.ai.providers.mcp_llm_gateway import McpLlmGatewayProvider
+from app.ai.providers.llm_provider import LlmProvider
 from app.ai.retrieval.noop import NoopRetriever
 from app.ai.retrieval.schemas import Evidence, RetrievalQuery
 from app.ai.routing.service import RouteDecision, choose_route_candidates, mark_route_failure, mark_route_success
@@ -356,8 +356,8 @@ def _agent_result(result: AgentResult) -> dict:
 
 
 def _provider_for(provider_name: str) -> AiProvider:
-    # provider 字段来自模型路由表；AI Gateway 不直接调具体模型，统一转发到 MCP LLM Gateway。
-    return McpLlmGatewayProvider(provider_name)
+    # provider 字段来自模型路由表；AI Gateway 不直接调具体模型，统一转发到 LLM Provider 服务。
+    return LlmProvider(provider_name)
 
 
 def _filter_candidates(candidates: list[RouteDecision], mode: str) -> list[RouteDecision]:

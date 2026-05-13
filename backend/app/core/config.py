@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     ai_gateway_url: str = "http://127.0.0.1:8010"
     ai_gateway_internal_token: str = "local-dev-token"
     ai_gateway_timeout_seconds: int = 120
-    mcp_llm_gateway_url: str = "http://127.0.0.1:8020"
+    llm_provider_url: str = "http://127.0.0.1:8020"
     ark_base_url: str = ""
     ark_api_key: str = ""
     ark_chat_model: str = ""

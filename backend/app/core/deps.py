@@ -10,8 +10,8 @@ from sqlalchemy.orm import selectinload
 from app.core.errors import forbidden, unauthorized
 from app.core.security import decode_token
 from app.db.session import get_session
-from app.modules.identity.models import User
-from app.modules.rbac.models import Permission, Role
+from app.common.identity.models import User
+from app.common.rbac.models import Permission, Role
 
 bearer = HTTPBearer(auto_error=False)
 
