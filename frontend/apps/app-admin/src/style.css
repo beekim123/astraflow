@@ -63,6 +63,16 @@ body {
   color: rgba(255, 255, 255, 0.76);
 }
 
+.side-menu .el-sub-menu__title {
+  border-radius: 14px;
+  color: rgba(255, 255, 255, 0.88);
+  font-weight: 800;
+}
+
+.side-menu .el-menu {
+  background: transparent;
+}
+
 .side-menu .el-menu-item.is-active {
   background: #f2cb76;
   color: #15352c;

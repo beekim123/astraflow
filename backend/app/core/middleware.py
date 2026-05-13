@@ -6,6 +6,7 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.db.session import async_session_maker
+from app.core.logging import log_service_event
 from app.modules.audit_log.models import OperationLog
 
 logger = logging.getLogger("astraflow.request")
@@ -19,15 +20,14 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
         cost_ms = round((time.perf_counter() - started_at) * 1000, 2)
-        logger.info(
+        log_service_event(
+            logger,
             "request_done",
-            extra={
-                "request_id": request_id,
-                "method": request.method,
-                "path": request.url.path,
-                "status_code": response.status_code,
-                "cost_ms": cost_ms,
-            },
+            request_id=request_id,
+            method=request.method,
+            path=request.url.path,
+            status=response.status_code,
+            latency_ms=cost_ms,
         )
         return response
 
@@ -57,4 +57,3 @@ class OperationLogMiddleware(BaseHTTPMiddleware):
             except Exception as exc:
                 logger.warning("operation_log_failed: %s", exc)
         return response
-

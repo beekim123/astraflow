@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Table, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, BaseModelMixin
+
+if TYPE_CHECKING:
+    from app.modules.identity.models import User
 
 role_permissions = Table(
     "role_permissions",

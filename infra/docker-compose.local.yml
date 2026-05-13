@@ -22,24 +22,94 @@ services:
     volumes:
       - redis_data:/data
 
-  backend:
+  mcp-llm-gateway:
     profiles: ["full"]
     build:
       context: ../backend
+    env_file:
+      - path: ./env/.env.local
+        required: false
     environment:
+      SERVICE_NAME: mcp-llm-gateway
+      APP_ENV: local
+      AI_GATEWAY_INTERNAL_TOKEN: local-dev-token
+    ports:
+      - "18082:8020"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8020/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    command: uvicorn app.services.mcp_llm_gateway.main:app --host 0.0.0.0 --port 8020
+
+  ai-gateway:
+    profiles: ["full"]
+    build:
+      context: ../backend
+    env_file:
+      - path: ./env/.env.local
+        required: false
+    environment:
+      SERVICE_NAME: ai-gateway
       APP_ENV: local
       SECRET_KEY: local-dev-secret
       DATABASE_URL: postgresql+asyncpg://astraflow:astraflow@postgres:5432/astraflow
       REDIS_URL: redis://redis:6379/0
+      AI_GATEWAY_INTERNAL_TOKEN: local-dev-token
+      AI_GATEWAY_TIMEOUT_SECONDS: "120"
+      MCP_LLM_GATEWAY_URL: http://mcp-llm-gateway:8020
+    ports:
+      - "18081:8010"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mcp-llm-gateway:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8010/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    command: uvicorn app.services.ai_gateway.main:app --host 0.0.0.0 --port 8010
+
+  backend:
+    profiles: ["full"]
+    build:
+      context: ../backend
+    env_file:
+      - path: ./env/.env.local
+        required: false
+    environment:
+      SERVICE_NAME: backend-api
+      APP_ENV: local
+      SECRET_KEY: local-dev-secret
+      DATABASE_URL: postgresql+asyncpg://astraflow:astraflow@postgres:5432/astraflow
+      REDIS_URL: redis://redis:6379/0
+      AI_GATEWAY_URL: http://ai-gateway:8010
+      AI_GATEWAY_INTERNAL_TOKEN: local-dev-token
+      AI_GATEWAY_TIMEOUT_SECONDS: "120"
       CORS_ORIGINS: http://localhost:17300,http://localhost:17301,http://localhost:17302,http://localhost:17303,http://localhost:17304,http://localhost:17305,http://localhost:17306,http://localhost:18000
       GATE_COOKIE_SECURE: "false"
+      UPLOAD_DIR: var/uploads
+      UPLOAD_IMAGE_MAX_MB: "10"
+      UPLOAD_FILE_MAX_MB: "50"
+      UPLOAD_VIDEO_MAX_MB: "200"
     ports:
       - "18080:8000"
+    volumes:
+      - backend_uploads:/app/var/uploads
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_started
+      ai-gateway:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     command: sh -c "alembic upgrade head && python -m app.db.init_db && uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
   portal-shell:
@@ -127,6 +197,8 @@ services:
       - "18000:80"
     depends_on:
       - backend
+      - ai-gateway
+      - mcp-llm-gateway
       - portal-shell
       - app-admin
       - app-chat
@@ -138,3 +210,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  backend_uploads:

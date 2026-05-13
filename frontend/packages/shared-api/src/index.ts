@@ -7,8 +7,10 @@ export type ApiResult<T> = {
   data: T
 }
 
+export const apiBaseURL = import.meta.env.VITE_API_BASE_URL || "/api"
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
+  baseURL: apiBaseURL,
   timeout: 20000,
   withCredentials: true,
 })
@@ -20,6 +22,51 @@ function createRequestId() {
     return crypto.randomUUID()
   }
   return `req-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`
+}
+
+export function buildApiUrl(path: string) {
+  const base = apiBaseURL.replace(/\/$/, "")
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`
+  return `${base}${normalizedPath}`
+}
+
+function createAuthHeaders(headers?: HeadersInit, token = getAccessToken()) {
+  const merged = new Headers(headers)
+  if (token) {
+    merged.set("Authorization", `Bearer ${token}`)
+  }
+  if (!merged.has("X-Request-ID")) {
+    merged.set("X-Request-ID", createRequestId())
+  }
+  return merged
+}
+
+async function getFreshAccessToken() {
+  if (!refreshing) {
+    refreshing = refreshAccessToken()
+  }
+  const token = await refreshing
+  refreshing = null
+  return token
+}
+
+export async function authFetch(path: string, init: RequestInit = {}) {
+  const url = buildApiUrl(path)
+  const request = {
+    ...init,
+    headers: createAuthHeaders(init.headers),
+  }
+  let response = await fetch(url, request)
+  if (response.status !== 401) return response
+
+  const token = await getFreshAccessToken()
+  if (!token) return response
+
+  response = await fetch(url, {
+    ...init,
+    headers: createAuthHeaders(init.headers, token),
+  })
+  return response
 }
 
 api.interceptors.request.use((config) => {
@@ -56,7 +103,7 @@ async function refreshAccessToken() {
   if (!refreshToken) return null
   try {
     const { data } = await axios.post<ApiResult<{ access_token: string; refresh_token: string }>>(
-      `${import.meta.env.VITE_API_BASE_URL || "/api"}/auth/refresh`,
+      buildApiUrl("/auth/refresh"),
       { refresh_token: refreshToken },
       { withCredentials: true },
     )

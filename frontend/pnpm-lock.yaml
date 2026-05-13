@@ -79,6 +79,9 @@ importers:
       '@astraflow/shared-auth':
         specifier: workspace:*
         version: link:../../packages/shared-auth
+      element-plus:
+        specifier: ^2.11.8
+        version: 2.13.7(typescript@5.9.3)(vue@3.5.33(typescript@5.9.3))
       vue:
         specifier: ^3.5.3
         version: 3.5.33(typescript@5.9.3)

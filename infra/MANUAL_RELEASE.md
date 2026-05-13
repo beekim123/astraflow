@@ -47,7 +47,81 @@
 
 这样不需要改线上项目目录名，线上始终使用 `/opt/astraflow/repo`。
 
-## 3. 发布前检查
+## 3. 域名访问链路
+
+域名不是和代码直接绑定的，完整链路是：
+
+```text
+用户浏览器
+-> 域名 DNS A 记录解析到服务器公网 IP
+-> 云服务器安全组 / 防火墙放行 80 或 443
+-> 服务器端口进入 Docker Nginx
+-> Nginx 托管前端静态资源，并把 /api 转发到 backend:8000
+-> FastAPI 后端处理接口
+```
+
+当前 Compose 里 Nginx 的端口映射由 `infra/env/.env.prod` 控制：
+
+```yaml
+ports:
+  - "${HTTP_PORT}:80"
+  - "${HTTPS_PORT}:443"
+```
+
+如果 `HTTP_PORT=80`、`HTTPS_PORT=443`，域名可以直接打到 Docker Nginx。
+
+如果 `HTTP_PORT=19000` 这类非标准端口，域名要正常使用 `http://域名` 或 `https://域名`，服务器前面通常还需要一个外层 Nginx，把 80 或 443 转发到本项目端口：
+
+```nginx
+server {
+  listen 80;
+  server_name your-domain.com;
+
+  location / {
+    proxy_pass http://127.0.0.1:19000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}
+```
+
+项目内置的生产 Nginx 当前使用：
+
+```nginx
+server_name _;
+```
+
+这表示它不限制具体域名，凡是打到这个 Nginx 的请求都能接收。更严格的生产配置可以改成真实域名，例如：
+
+```nginx
+server_name your-domain.com www.your-domain.com;
+```
+
+排查域名是否正确打到项目，可以在服务器上看这几项：
+
+```bash
+docker compose --env-file infra/env/.env.prod -f infra/docker-compose.prod.yml ps
+grep -E '^(HTTP_PORT|HTTPS_PORT|PUBLIC_ORIGIN|CORS_ORIGINS|NGINX_CONF)=' infra/env/.env.prod
+curl -I "http://127.0.0.1:$(grep -E '^HTTP_PORT=' infra/env/.env.prod | cut -d '=' -f 2-)"
+```
+
+如果服务器还有外层 Nginx，再检查它是否转发到了本项目端口：
+
+```bash
+sudo nginx -T | grep -nE 'server_name|proxy_pass|19000|19443'
+```
+
+修改域名时通常要同步检查：
+
+- DNS A 记录是否指向服务器公网 IP。
+- 云服务器安全组是否放行 80 / 443。
+- `PUBLIC_ORIGIN` 和 `CORS_ORIGINS` 是否改成真实域名。
+- HTTPS 证书是否放到 `infra/certs`，并把 `NGINX_CONF` 切到 `nginx.prod.https.conf`。
+- 开启 HTTPS 后，`GATE_COOKIE_SECURE` 应改为 `true`。
+
+## 4. 发布前检查
 
 进入项目目录：
 
@@ -82,7 +156,7 @@ curl -fsS "$(grep -E '^HEALTHCHECK_URL=' infra/env/.env.prod | cut -d '=' -f 2-)
 
 如果发布前健康检查已经失败，先不要发版，先排查当前线上问题。
 
-## 4. 备份当前项目目录
+## 5. 备份当前项目目录
 
 在 `/opt/astraflow` 下备份当前 `repo` 目录：
 
@@ -102,7 +176,7 @@ ls -lt releases | head
 
 这个目录就是回滚时要切回的“老包”。
 
-## 5. 备份数据库
+## 6. 备份数据库
 
 ```bash
 cd /opt/astraflow/repo
@@ -121,7 +195,7 @@ cd /opt/astraflow/repo
 ls -lt /opt/astraflow/backups/postgres | head
 ```
 
-## 6. 拉取新代码
+## 7. 拉取新代码
 
 ```bash
 cd /opt/astraflow/repo
@@ -134,7 +208,7 @@ git pull origin master
 git log --oneline -5
 ```
 
-## 7. 执行部署
+## 8. 执行部署
 
 ```bash
 cd /opt/astraflow/repo
@@ -151,7 +225,7 @@ python -m app.db.init_db
 健康检查
 ```
 
-## 8. 发布后验证
+## 9. 发布后验证
 
 健康检查：
 
@@ -182,7 +256,7 @@ docker compose --env-file infra/env/.env.prod -f infra/docker-compose.prod.yml l
 6. 进入管理系统，确认子应用能加载。
 ```
 
-## 9. 回滚代码目录
+## 10. 回滚代码目录
 
 如果发布后出现问题，先找最近一次备份目录：
 
@@ -214,7 +288,7 @@ curl -fsS "$(grep -E '^HEALTHCHECK_URL=' infra/env/.env.prod | cut -d '=' -f 2-)
 docker compose --env-file infra/env/.env.prod -f infra/docker-compose.prod.yml ps
 ```
 
-## 10. 是否需要恢复数据库
+## 11. 是否需要恢复数据库
 
 一般小版本发布不需要恢复数据库。
 
@@ -235,7 +309,7 @@ docker compose --env-file infra/env/.env.prod -f infra/docker-compose.prod.yml p
 
 当前阶段如果只是普通代码发布，优先使用“代码目录回滚”，不要轻易恢复数据库。
 
-## 11. 当前阶段不做自动 CD 的原因
+## 12. 当前阶段不做自动 CD 的原因
 
 暂时不建议 push 后自动发布到服务器。
 

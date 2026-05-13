@@ -16,3 +16,7 @@ infra/certs/
 *.key
 *.sql
 *.dump
+
+# Local editor/exported screenshots and cached images.
+/image/
+/infra/image/

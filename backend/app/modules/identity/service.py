@@ -18,7 +18,6 @@ from app.modules.identity.models import RefreshToken, User
 from app.modules.identity.repository import get_refresh_token, get_user_by_id, get_user_by_username
 from app.modules.identity.schemas import MeOut, TokenResponse, UserCreate, UserOut, UserUpdate
 from app.modules.audit_log.models import OperationLog
-from app.modules.rbac.models import Role
 from app.modules.rbac.repository import get_roles_by_ids
 
 

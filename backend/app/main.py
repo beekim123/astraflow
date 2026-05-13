@@ -10,6 +10,8 @@ from app.core.logging import configure_logging
 from app.core.middleware import OperationLogMiddleware, RequestIDMiddleware
 from app.core.responses import error_response, success
 from app.modules.audit_log.router import router as audit_log_router
+from app.modules.ai_admin.router import router as ai_admin_router
+from app.modules.chat.router import router as chat_router
 from app.modules.identity.router import admin_router as users_admin_router
 from app.modules.identity.router import auth_router
 from app.modules.learn.router import learn_router
@@ -80,7 +82,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 @app.get("/api/health")
 async def health():
     # 健康检查接口。部署、Docker、Nginx 或监控系统可以用它判断后端是否存活。
-    return success({"status": "ok", "app": settings.app_name})
+    return success({"status": "ok", "app": settings.app_name, "service": settings.service_name})
 
 
 # 下面是路由挂载区。
@@ -94,4 +96,6 @@ app.include_router(roles_router)
 app.include_router(admin_menus_router)
 app.include_router(permissions_router)
 app.include_router(audit_log_router)
+app.include_router(ai_admin_router)
+app.include_router(chat_router)
 app.include_router(placeholder_router)

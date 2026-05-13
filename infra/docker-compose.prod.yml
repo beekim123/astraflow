@@ -30,12 +30,71 @@ services:
     networks:
       - astraflow_net
 
+  mcp-llm-gateway:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    environment:
+      SERVICE_NAME: mcp-llm-gateway
+      APP_ENV: ${APP_ENV}
+      APP_NAME: ${APP_NAME}
+      APP_DEBUG: ${APP_DEBUG}
+      AI_GATEWAY_INTERNAL_TOKEN: ${AI_GATEWAY_INTERNAL_TOKEN}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-30}
+      ARK_BASE_URL: ${ARK_BASE_URL:-}
+      ARK_API_KEY: ${ARK_API_KEY:-}
+      ARK_CHAT_MODEL: ${ARK_CHAT_MODEL:-}
+      ARK_EMBEDDING_MODEL: ${ARK_EMBEDDING_MODEL:-}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8020/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    command: uvicorn app.services.mcp_llm_gateway.main:app --host 0.0.0.0 --port 8020
+    networks:
+      - astraflow_net
+
+  ai-gateway:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    environment:
+      SERVICE_NAME: ai-gateway
+      APP_ENV: ${APP_ENV}
+      APP_NAME: ${APP_NAME}
+      APP_DEBUG: ${APP_DEBUG}
+      SECRET_KEY: ${SECRET_KEY}
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      AI_GATEWAY_INTERNAL_TOKEN: ${AI_GATEWAY_INTERNAL_TOKEN}
+      AI_GATEWAY_TIMEOUT_SECONDS: ${AI_GATEWAY_TIMEOUT_SECONDS:-120}
+      MCP_LLM_GATEWAY_URL: ${MCP_LLM_GATEWAY_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mcp-llm-gateway:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8010/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    command: uvicorn app.services.ai_gateway.main:app --host 0.0.0.0 --port 8010
+    networks:
+      - astraflow_net
+
   backend:
     build:
       context: ../backend
       dockerfile: Dockerfile.prod
     restart: unless-stopped
     environment:
+      SERVICE_NAME: backend-api
       APP_ENV: ${APP_ENV}
       APP_NAME: ${APP_NAME}
       APP_DEBUG: ${APP_DEBUG}
@@ -45,12 +104,31 @@ services:
       REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS}
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL}
+      AI_GATEWAY_URL: ${AI_GATEWAY_URL}
+      AI_GATEWAY_INTERNAL_TOKEN: ${AI_GATEWAY_INTERNAL_TOKEN}
+      AI_GATEWAY_TIMEOUT_SECONDS: ${AI_GATEWAY_TIMEOUT_SECONDS:-120}
       CORS_ORIGINS: ${CORS_ORIGINS}
       GATE_COOKIE_SECURE: ${GATE_COOKIE_SECURE}
+      UPLOAD_DIR: ${UPLOAD_DIR:-var/uploads}
+      UPLOAD_IMAGE_MAX_MB: ${UPLOAD_IMAGE_MAX_MB:-10}
+      UPLOAD_FILE_MAX_MB: ${UPLOAD_FILE_MAX_MB:-50}
+      UPLOAD_VIDEO_MAX_MB: ${UPLOAD_VIDEO_MAX_MB:-200}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-30}
+      ARK_BASE_URL: ${ARK_BASE_URL:-}
+      ARK_API_KEY: ${ARK_API_KEY:-}
+      ARK_CHAT_MODEL: ${ARK_CHAT_MODEL:-}
+      ARK_EMBEDDING_MODEL: ${ARK_EMBEDDING_MODEL:-}
+    volumes:
+      - backend_uploads:/app/var/uploads
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      ai-gateway:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
@@ -83,12 +161,17 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+      ai-gateway:
+        condition: service_healthy
+      mcp-llm-gateway:
+        condition: service_healthy
     networks:
       - astraflow_net
 
 volumes:
   postgres_data:
   redis_data:
+  backend_uploads:
 
 networks:
   astraflow_net:

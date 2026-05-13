@@ -1,6 +1,6 @@
 # AstraFlow Backend
 
-第一阶段后端是一个模块化单体，负责平台底座：
+后端从第一阶段模块化单体演进到第二阶段服务化拆分：
 
 - FastAPI + Pydantic v2
 - SQLAlchemy 2.x AsyncSession + asyncpg
@@ -9,7 +9,19 @@
 - JWT + Refresh Token
 - RBAC 权限、动态菜单
 - 操作日志和 RequestID
-- AI 边界预留：`AgentClient` + `MockAgentClient`
+- AI 边界：`AgentClient` + `HttpAgentClient`
+
+## 阶段 2 服务边界
+
+本阶段仍然共用一个后端代码仓库和镜像，但运行时拆成三个进程/容器：
+
+```text
+backend-api       通用业务 API：登录、RBAC、菜单、聊天业务状态、附件、产物落库
+ai-gateway        AI 编排服务：安全检查、模型路由、Prompt、RAG 预留、模型调用日志
+mcp-llm-gateway   模型工具服务：mock/openai-compatible Provider 和流式模型调用
+```
+
+聊天模块只依赖 `AgentClient`，通过 `AI_GATEWAY_URL` 调用 `ai-gateway`，不再直接 import AI 编排函数。
 
 ## 本地断点调试
 
@@ -34,6 +46,8 @@ python -m alembic upgrade head
 python -m app.db.init_db
 python -m uvicorn app.main:app --reload --port 18080
 ```
+
+如果要在本机直接调试聊天接口，还需要同时启动 `ai-gateway` 和 `mcp-llm-gateway`，或使用 `infra/docker-compose.local.yml --profile full` 启动完整链路。
 
 `backend/.env.example` 默认连接本机端口：
 
@@ -79,4 +93,4 @@ RUN_DB_TESTS=1 pytest app/tests/test_auth.py
 - 不拆微服务。
 - 不接 Nacos。
 
-第二阶段会把 `MockAgentClient` 替换为调用 `ai-gateway` 的 HTTP 客户端，再由 `ai-gateway` 统一转发到 MCP 服务。
+第二阶段已把 `MockAgentClient` 主链路替换为调用 `ai-gateway` 的 HTTP 客户端，再由 `ai-gateway` 统一转发到 `mcp-llm-gateway`。

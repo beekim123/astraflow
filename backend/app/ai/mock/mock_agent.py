@@ -1,3 +1,5 @@
+from collections.abc import AsyncIterator
+
 from app.ai.contracts.client import AgentClient
 from app.ai.contracts.schemas import AgentRequest, AgentResult
 
@@ -11,3 +13,7 @@ class MockAgentClient(AgentClient):
             data={"echo": request.payload},
         )
 
+    async def stream(self, request: AgentRequest) -> AsyncIterator[dict]:
+        result = await self.run(request)
+        yield {"type": "answer_delta", "content": result.summary, "data": {}}
+        yield {"type": "_result", "result": result}

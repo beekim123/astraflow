@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Table, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, BaseModelMixin
+
+if TYPE_CHECKING:
+    from app.modules.rbac.models import Role
 
 user_roles = Table(
     "user_roles",
@@ -40,4 +44,3 @@ class RefreshToken(BaseModelMixin, Base):
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     user: Mapped[User] = relationship(back_populates="refresh_tokens")
-
